@@ -1,17 +1,22 @@
 import requests
 
 url = "http://localhost:5001/get_recipe"
+url2 = "http://localhost:5001/extract_recipe"
 
 payload = {
-    "ingredients": ["tomato", "potato", "onion", "oil"]
+    "ingredients": ["chicken breast", "curry", "pepper", "milk"],
+    "unwantedIngredients": ["onion"]
 }
 
-#for i in payload["ingredients"]:
-#    print(i)
+payload2 = {
+
+    "string": "I'm looking for something easy to cook with pasta, tomatoes, and cheese."
+
+}
 
 headers = {"Content-Type": "application/json"}
 
-response = requests.post(url, json=payload, headers=headers)
+response = requests.post(url2, json=payload2, headers=headers)
 
 if response.status_code == 200:
     results = response.json()
