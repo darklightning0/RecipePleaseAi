@@ -4,7 +4,7 @@ from flask import Flask, request, jsonify
 from pymilvus import MilvusClient
 from openai import OpenAI
 from sentence_transformers import SentenceTransformer
-import numpy as np
+import json
 
 app = Flask(__name__)
 
@@ -53,7 +53,7 @@ If you have any questions about these recipes or need further assistance, don't 
 
 messages = [{"role": "system", "content": recipe_prompt}]
 
-#REQUEST
+#GET RECIPE
 
 @app.route('/get_recipe', methods = ['POST'])
 def get_recipe():
@@ -100,18 +100,12 @@ def get_recipe():
 
     return jsonify(response.choices[0].message.content), 200
 
-#REQUEST
 
-@app.route('/extract_recipe', methods = ['POST'])
-def extract_recipe():
-    
-    data = request.get_json()
-    string = data.get("string")
+#EXTRACT RECIPE
 
-    if not data:
-        return jsonify({"error": "No data"}), 400
-    
-    completion = openai.chat.completions.create(
+def function_calling(string):
+     
+    response = openai.chat.completions.create(
     model="gpt-4o",
     messages=[
         {
@@ -130,12 +124,12 @@ def extract_recipe():
                         "type": "array",
                         "items": {
                             "type": "string",
-                            "description": "The ingredients user has.",
+                            "description": "The ingredients user has. If the ingredient is not specific, don't write it. (example: vegetables, various produce items, yellow fruits, greens)",
                         },
                     },
                     "cuisine": {
                         "type": "string",
-                        "description": "The cuisine user wants to cook from."
+                        "description": "The cuisine user wants to cook from. If not specific return None."
                         },
                     "unwanted_ingredients": {
                         "type": "array",
@@ -154,7 +148,7 @@ def extract_recipe():
                     },
                     "budget": {
                         "type": "integer",
-                        "description": "Determine the budget of the user."
+                        "description": "Determine the budget of the user and the currency its given. Convert to US dollars."
                     },
                     "nutrition_preferences": {
                         "type": "string",
@@ -166,15 +160,67 @@ def extract_recipe():
             },
         
     ],
-    function_call="auto",
+    function_call={"name": "extract_recipe"},
 )
+    
+    return response
 
-    response = completion.choices[0].message.function_call.arguments
-    data = eval(response)
+@app.route('/extract_recipe', methods = ['POST'])
+def extract_recipe(input = None):
+    
+    data = request.get_json()
+    string = data.get("string")
 
-    print(data)
+    if not data:
+        return jsonify({"error": "No data"}), 400
+    
+    response = function_calling(string).choices[0].message.function_call.arguments
+    data = json.loads(response)
 
     return jsonify(data), 200
+
+
+#EXTRACT INGREDIENTS FROM IMAGE
+
+
+@app.route('/extract_ingredients_from_image', methods = ['POST'])
+def extract_ingredients_from_image():
+     
+    data = request.get_json()
+    image = data.get("image")
+
+    response = openai.chat.completions.create(
+         
+        model="gpt-4o",
+        messages=[
+            {
+            "role": "user",
+            "content": [
+                 {
+                    "type": "text",
+                    "text": "What ingredients do you see in this image? Specify every ingredient. Don't give unstable answers like (vegetables, various produce items, yellow fruits, greens, cabbage or lettuce)"
+                 },
+                 {
+                    "type": "image_url",
+                    "image_url": 
+                        { 
+                            "url": f"data:image/jpeg;base64,{image}",
+                            "detail": "low"
+                        },
+                    }
+                ]
+            }
+        ]
+    )
+
+    ingredients = function_calling(response.choices[0].message.content).choices[0].message.function_call.arguments
+    ingredients = json.loads(ingredients)
+
+
+    return ingredients
+      
+    
+
 
 if __name__ == '__main__':
     app.run(debug=False, host="0.0.0.0", port=5001, processes = 1, threaded = False)
