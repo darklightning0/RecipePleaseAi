@@ -3,18 +3,17 @@ import base64
 
 headers = {"Content-Type": "application/json"}
 
-url = ""
-payload = ""
-
 def get_recipe():
 
     url = "http://localhost:5001/get_recipe"
     payload = {
 
-    "ingredients": ["chicken breast", "curry", "pepper", "milk"],
-    "unwantedIngredients": ["onion"]
+    "ingredients": ["chicken breast", "egg", "flour", "salt", "mineral water"],
+    "unwantedIngredients": [""]
 
 }
+    
+    return url, payload
     
 
 
@@ -52,7 +51,13 @@ def extract_from_image():
     return url, payload
 
 
-url, payload = extract_from_image()
+
+
+
+url, payload = get_recipe()
+
+
+
 
 headers = {"Content-Type": "application/json"}
 

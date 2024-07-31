@@ -48,7 +48,7 @@ Instructions:\n
 \n
 \n
 If you have any questions about these recipes or need further assistance, don't hesitate to ask. Happy cooking!
-(Please ensure each recipe is clearly separated and follows the structure provided above. Put space lines at (space). Aim to make the recipes easy to read and follow. Do not use these: * and #)
+(Please ensure each recipe is clearly separated and follows the structure provided above. Put spaces in necessary areas. Aim to make the recipes easy to read and follow. Do not use these: * and #)
 """
 
 messages = [{"role": "system", "content": recipe_prompt}]
@@ -96,7 +96,7 @@ def get_recipe():
 
     messages.append({"role": "user", "content": results_text})
 
-    response = openai.chat.completions.create(model = "gpt-4o", messages = messages)
+    response = openai.chat.completions.create(model = "gpt-4o-mini", messages = messages)
 
     return jsonify(response.choices[0].message.content), 200
 
@@ -106,7 +106,7 @@ def get_recipe():
 def function_calling(string):
      
     response = openai.chat.completions.create(
-    model="gpt-4o",
+    model="gpt-4o-mini",
     messages=[
         {
             "role": "user",
@@ -129,18 +129,18 @@ def function_calling(string):
                     },
                     "cuisine": {
                         "type": "string",
-                        "description": "The cuisine user wants to cook from. If not specific return None."
+                        "description": "The cuisine user wants to cook from."
                         },
                     "unwanted_ingredients": {
                         "type": "array",
                         "items": {
                             "type": "string",
-                            "description": "The ingredients user don't want to use..",
+                            "description": "The ingredients user don't want to use.",
                         },
                     },
                     "difficulty": {
                         "type": "integer",
-                        "description": "Scale the difficulty user wants between 1 and 5."
+                        "description": "Scale the difficulty user wants between 1 and 5.",
                     },
                     "meal_type": {
                         "type": "string",
@@ -152,7 +152,7 @@ def function_calling(string):
                     },
                     "nutrition_preferences": {
                         "type": "string",
-                        "description": "Determine the nutrition preferences of the user (example: high protein, low calorie, no sugar)."
+                        "description": "Determine the nutrition preferences of the user (example: high protein, low calorie, no sugar).."
                     },
                     },
                 },
@@ -177,6 +177,12 @@ def extract_recipe(input = None):
     response = function_calling(string).choices[0].message.function_call.arguments
     data = json.loads(response)
 
+    print(data)
+
+    data["difficulty"] = data.get("difficulty", 3)
+    data["meal_type"] = data.get("meal_type", "any")
+
+
     return jsonify(data), 200
 
 
@@ -198,7 +204,7 @@ def extract_ingredients_from_image():
             "content": [
                  {
                     "type": "text",
-                    "text": "What ingredients do you see in this image? Specify every ingredient. Don't give unstable answers like (vegetables, various produce items, yellow fruits, greens, cabbage or lettuce)"
+                    "text": "What ingredients do you see in this image? Specify every ingredient. Give stable answers unlike (vegetables, various produce items, yellow fruits, greens, cabbage or lettuce). Present ingredients all in lowercase."
                  },
                  {
                     "type": "image_url",
@@ -212,10 +218,11 @@ def extract_ingredients_from_image():
             }
         ]
     )
+    print(response.choices[0].message.content)
+    arguments = function_calling(response.choices[0].message.content).choices[0].message.function_call.arguments
+    ingredients = json.loads(arguments)
 
-    ingredients = function_calling(response.choices[0].message.content).choices[0].message.function_call.arguments
-    ingredients = json.loads(ingredients)
-
+    print(ingredients)
 
     return ingredients
       
@@ -225,3 +232,4 @@ def extract_ingredients_from_image():
 if __name__ == '__main__':
     app.run(debug=False, host="0.0.0.0", port=5001, processes = 1, threaded = False)
 
+    
