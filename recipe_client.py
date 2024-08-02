@@ -1,14 +1,16 @@
 import requests
 import base64
 
+
 headers = {"Content-Type": "application/json"}
 
 def get_recipe():
 
     url = "http://localhost:5001/get_recipe"
+
     payload = {
 
-    "ingredients": ["chicken breast", "egg", "flour", "salt", "mineral water"],
+    "ingredients": ["tomato, onion, garlic, salt, pepper, olive oil"],
     "unwantedIngredients": [""]
 
 }
@@ -25,7 +27,7 @@ def extract_recipe():
 
     payload = {
 
-        "string": "I am preparing breakfast for the evening. I have pepper, salst and 1/2 salnon. I don't like pepper."
+        "string": "I want to make a dessert without dairy. I have bananas, oats, and almond milk. Also, it shouldn't be too difficult"
 
     }
 
@@ -53,8 +55,23 @@ def extract_from_image():
 
 
 
+def get_relevant_recipes():
 
-url, payload = get_recipe()
+    url = "http://localhost:5001/get_relevant_recipe_titles"
+
+    payload = {
+
+        "title": "Caesar Salad Roast Chicken"
+
+    }
+
+    return url, payload
+
+
+
+
+
+url, payload = get_relevant_recipes()
 
 
 

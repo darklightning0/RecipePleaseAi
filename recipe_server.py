@@ -3,50 +3,41 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 from flask import Flask, request, jsonify
 from pymilvus import MilvusClient
 from openai import OpenAI
-from sentence_transformers import SentenceTransformer
 import json
+import umap
+import hdbscan
+import pickle
+import numpy as np
+import pandas as pd
 
 app = Flask(__name__)
 
-sentence_model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
-client = MilvusClient("recipe_database_13k.db")
-client.load_collection(collection_name="recipe_collection13k", replica_number=1)
+client = MilvusClient("recipe_database_13k_gpt.db")
+client.load_collection(collection_name="recipe_collection_13k_gpt", replica_number=1)
+
 openai = OpenAI(api_key = os.environ.get('GPT_TOKEN'))
 
-
 recipe_prompt = """Your task is to help users find the perfect recipe based on their ingredients. Present these 5 recipes in a friendly and approachable tone, using the format provided:
+5 Recipes According To Your Ingredients
+(respond in a JSON format like this:)
+recipes: [
+  {
+    "name": "string",
+    "type": "string", (example: Dessert, Breakfast, Dinner, Snack, Salad, Soup, Sauce, Lunch, Tea, Barbecue, Cold drink, Coffee, Beverage...)
+    "cuisine": "string", (estimate the recipe's cultural origin, example: Italian, Mexican, Chinese, etc.)
+    "difficulty": int,  (categorize recipe difficulty according to ingredients and instructions, choices: Beginner, Intermediate, Advanced)
+    "cooking_time": "string", (estimate total cooking time to prepare the recipe according to instructions. format is in: HH hours MM minutes)
+    "servings": int,
+    "nutrition_facts": {"string": int, "string": int}, (estimate all the nutrition facts(calories, fat, carbs, protein) according to ingredients per serving)
+    "allergens": ["string", "string"], (estimate possible allergens. Example: Dairy (butter), Nuts (almonds), Gluten (flour))
+    "ingredients": ["string", "string"],
+    "instructions": ["string", "string"],
+  },
+  {
+    ...
+  },
 
-5 Recipes According to Your Ingredients\n
-Ingredients: (write ingredients)\n
-\n
-Recipe Name: (example: dessert, breakfast, dinner, snack, salad, soup, sauce, lunch, tea, barbecue, cold drink, coffee...)\n
-\n
-Meal Type: (example: dessert, breakfast, dinner, snack, salad, soup, sauce, lunch, tea, barbecue, cold drink, coffee...)\n
-Cuisine: (estimate the recipe's cultural origin, example: Italian, Mexican, Chinese, etc.)\n
-\n
-Level: (categorize recipe difficulty according to ingredients and instructions, choices: Beginner, Intermediate, Advanced)\n
-Estimated Cooking Time: (estimate total cooking time to prepare the recipe according to instructions. Give it in minutes, example: 30 mins)\n
-\n
-Servings: (estimate the number of servings according to ingredients, example: 1 servings)\n
-Estimated Nutrition Facts (per serving): (estimate nutrition facts according to ingredients per serving)\n
-  Calories: (example: 1 kcal)\n
-  Fat: (example: 1 grams)\n
-  Carbs: (example: 1 grams)\n
-  Protein: (example: 1 grams)\n
-\n
-Possible Allergens: (estimate possible allergens; if none, write "None". Example: Dairy (butter), Nuts (almonds), Gluten (flour))\n
-\n
-Ingredients: \n
-- (ingredient 1)\n
-- (ingredient 2)\n
-- ...
-\n
-Instructions:\n
-1. (instruction 1)\n
-2. (instruction 2)\n
-...
-\n
-\n
+]
 If you have any questions about these recipes or need further assistance, don't hesitate to ask. Happy cooking!
 (Please ensure each recipe is clearly separated and follows the structure provided above. Put spaces in necessary areas. Aim to make the recipes easy to read and follow. Do not use these: * and #)
 """
@@ -56,47 +47,63 @@ messages = [{"role": "system", "content": recipe_prompt}]
 #GET RECIPE
 
 @app.route('/get_recipe', methods = ['POST'])
-def get_recipe():
-    
+def get_recipe(ing = None, un_ing = [""]):
+
     data = request.get_json()
     user_ingredients = data.get("ingredients", [])
     userUnwantedIngredients = data.get("unwantedIngredients", [])
 
     if not data:
-        return jsonify({"error": "No data"}), 400
+        print("NO DATA")
+        user_ingredients = ing
+        userUnwantedIngredients = un_ing
+        if not user_ingredients:
+            return jsonify({"error": "No data"}), 400
+        
+    if ing:
+        user_ingredients = ing
+        userUnwantedIngredients = un_ing
+
 
 #DATABASE SEARCH
 
-    query_vectors = sentence_model.encode("\n".join(user_ingredients))
-
+    #query_vectors = sentence_model.encode(" ".join(user_ingredients))
+    
+    response = openai.embeddings.create(
+        input=" ".join(user_ingredients),
+        model="text-embedding-3-small"
+    )
+    query_vectors = response.data[0].embedding
+    
     results = client.search(
 
-        collection_name="recipe_collection13k",  
+        collection_name="recipe_collection_13k_gpt",  
         data=[query_vectors], 
         filter=f'ingredients not in {userUnwantedIngredients}',
         limit=10,  
         output_fields=["ingredients", "name", "recipe"], 
 
     )
+    '''
     for hits in results:
          for result in hits:
               entity = result["entity"]
               for i in entity:
                    print(i)
-
+    '''
     results_text = f"Ingredients: {', '.join(user_ingredients)}\n"
     results_text += f"Unwanted Ingredients: {', '.join(userUnwantedIngredients)}\n"
+    results_text = ""
     for hits in results:
             for result in hits:
                 entity = result["entity"]
                 results_text += f"\nRecipe Name: {entity['name']}\nIngredients: {entity['ingredients']}\nInstructions: {entity['recipe']}\n"
 
-    # LLM RESPONSE
-    print(results_text)
-
+    #LLM RESPONSE
+    
     messages.append({"role": "user", "content": results_text})
 
-    response = openai.chat.completions.create(model = "gpt-4o-mini", messages = messages)
+    response = openai.chat.completions.create(model = "gpt-4o-mini", response_format = { "type": "json_object" }, messages = messages)
 
     return jsonify(response.choices[0].message.content), 200
 
@@ -166,7 +173,7 @@ def function_calling(string):
     return response
 
 @app.route('/extract_recipe', methods = ['POST'])
-def extract_recipe(input = None):
+def extract_recipe():
     
     data = request.get_json()
     string = data.get("string")
@@ -181,6 +188,8 @@ def extract_recipe(input = None):
 
     data["difficulty"] = data.get("difficulty", 3)
     data["meal_type"] = data.get("meal_type", "any")
+
+    #recipes = get_recipe(ing = data.get("ingredients"))
 
 
     return jsonify(data), 200
@@ -220,13 +229,26 @@ def extract_ingredients_from_image():
     )
     print(response.choices[0].message.content)
     arguments = function_calling(response.choices[0].message.content).choices[0].message.function_call.arguments
-    ingredients = json.loads(arguments)
+    ingredients = json.loads(arguments)["ingredients"]
 
     print(ingredients)
 
-    return ingredients
+    recipes = get_recipe(ing = ingredients, un_ing = [""])
+
+    return recipes
       
     
+
+@app.route('/get_relevant_recipe_titles', methods = ['POST'])
+def get_relevant_recipe_titles():
+
+    data = request.get_json()
+    title = data.get("title")
+
+
+    return jsonify(), 200
+
+
 
 
 if __name__ == '__main__':
