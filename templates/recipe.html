@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/cdn/themes/light.css" />
+    <script type="module" src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/cdn/shoelace-autoloader.js"></script>
+    <title>{{ main_recipe.Title }}</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        .recipe-container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            max-width: 800px;
+            margin: 20px auto;
+        }
+
+        img {
+            max-width: 100%;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            color: #333;
+            margin-top: 20px;
+        }
+
+        p, ul {
+            margin: 10px 0;
+            color: #555;
+        }
+
+        sl-rating {
+            --symbol-size: 24px;
+        }
+
+        .chat-box {
+            margin-top: 20px;
+        }
+
+        .chat-box form {
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-box input[type="text"] {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        .card-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        sl-card {
+            --border-radius: 10px;
+            --box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        sl-card img {
+            border-top-left-radius: 10px;
+            border-top-right-radius: 10px;
+        }
+
+        sl-button {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>{{ main_recipe.Title }}</h1>
+    <div>
+        <img src="{{ url_for('static', filename='Food_Images/' ~ main_recipe.Image_Name ~ '.jpg') }}" alt="{{ main_recipe.name }}">
+        <h2>Type: </h2><p>{{ main_recipe.type }}</p>
+        <h2>Cooking Time: </h2><p>{{ main_recipe.cooking_time }}</p>
+        <h2>Difficulty</h2>
+        <sl-rating label="Difficulty" readonly value="{{ main_recipe.difficulty }}" class="difficulty" style="--symbol-color-active: #ffdd00;"></sl-rating>
+        <h2>Budget</h2>
+        <sl-rating label="Budget" readonly value="{{ main_recipe.budget }}" class="budget" style="--symbol-color-active: #2fd12f;"></sl-rating>
+        <h2>Servings: </h2><p>{{ main_recipe.servings }}</p>
+        <h2>Ingredients</h2>
+        <p>{{ main_recipe.Cleaned_Ingredients }}</p>
+        <h2>Instructions</h2>
+        <p>{{ main_recipe.Instructions }}</p>
+        <h2>Nutrition Facts</h2>
+        <ul>
+            <h3>Calories: </h3><li>{{ main_recipe.calories }}</li>
+            <h3>Fat: </h3><li>{{ main_recipe.fat }}</li>
+            <h3>Carbs: </h3><li>{{ main_recipe.carbs }}</li>
+            <h3>Protein: </h3><li>{{ main_recipe.protein }}</li>
+        </ul>
+        <h2>Allergens</h2>
+        <p>{{ main_recipe.allergens }}</p>
+        <h2>Ask Ai</h2>
+        <div class="chat-box">
+            <form id="chat-form">
+                <input type="text" name="query" placeholder="Type your message here..." style="width: 400px; height: 20px;">
+                <sl-button type="submit" variant="primary">Send</sl-button>
+                <input type="hidden" name="title" value="{{ main_recipe.Title }}">
+            </form>
+            <div id="chat-response"></div>
+        </div>
+        <h2>Recommendations</h2>
+        <div class="card-container">
+            {% for recipe in recommended_recipes %}
+            <sl-card class="card-overview">
+                <img
+                    slot="image"
+                    src="{{ url_for('static', filename='Food_Images/' ~ recipe.Image_Name ~ '.jpg') }}"
+                    alt="{{ recipe.Title }}"
+                />
+                <strong>{{ recipe.Title }}</strong><br />
+                <sl-button variant="primary" pill onclick="loadRecipeDetails('{{ recipe.Title }}')">More Info</sl-button>
+                <sl-rating label="Overall" readonly value="{{ recipe.overall }}"></sl-rating>
+            </sl-card>
+            {% endfor %}
+        </div>
+    </div>
+    <script>
+        document.getElementById('chat-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const query = event.target.query.value;
+            const title = event.target.title.value;
+
+            fetch('{{ url_for("ai_chat") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ query: query, title: title }),
+            })
+            .then(response => response.text())
+            .then(text => {
+                const chatResponse = document.getElementById('chat-response');
+                chatResponse.innerHTML = `<p>${text}</p>`;
+            })
+            .catch(error => {
+                console.error('There was a problem with the fetch operation:', error);
+            });
+        });
+        
+        function loadRecipeDetails(title) {
+            fetch('/get_relevant_recipe_titles', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ title: title }),
+            })
+            .then(response => response.text())
+            .then(html => {
+                document.open();
+                document.write(html);
+                document.close();
+            })
+            .catch(error => {
+                console.error('There was a problem with the fetch operation:', error);
+            });
+        }
+
+        const diff = document.querySelector('.difficulty');
+        diff.getSymbol = () => '<sl-icon name="lightning-charge-fill"></sl-icon>';
+
+        const bud = document.querySelector('.budget');
+        bud.getSymbol = () => '<sl-icon name="cash"></sl-icon>';
+    </script>
+</body>
+</html>

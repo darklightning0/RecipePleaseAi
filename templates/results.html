@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/cdn/themes/light.css" />
+    <script type="module" src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/cdn/shoelace-autoloader.js"></script>
+    <title>Recipes</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        .card_container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr); 
+            gap: 20px;
+            padding: 20px;
+        }
+
+        sl-card {
+            --border-radius: 10px;
+            --box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 100%; 
+        }
+
+        sl-card img {
+            border-top-left-radius: 10px;
+            border-top-right-radius: 10px;
+            width: 100%; 
+        }
+
+        sl-button {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Recipes</h1>
+    <h2>Your Ingredients: {{user_ingredients}}</h2>
+    <div class="card_container">
+        {% for recipe in recipes %}
+
+        <sl-card class="cards">
+            <img
+                slot="image"
+                src="{{ url_for('static', filename='Food_Images/' ~ recipe.image ~ '.jpg') }}"
+                alt="{{ recipe.name }}"
+            />
+            <h3>{{ recipe.name }}</h3>
+            <strong>Type: </strong><br/><ul>{{recipe.type}}</ul>
+            <strong>Ingredients</strong><br/>
+            <ul>{% for ing in recipe.ingredients %}<li>{{ ing }}</li>{% endfor %}</ul>
+            <div slot="footer">
+                <sl-button variant="primary" pill onclick="loadRecipeDetails('{{ recipe.name }}')">More Info</sl-button>
+                <sl-rating label="Overall" readonly value="{{recipe.overall}}"></sl-rating>
+            </div>
+        </sl-card>
+        {% endfor %}
+    </div>
+    <script>
+
+        function loadRecipeDetails(title){
+                fetch('/get_relevant_recipe_titles', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ title: title }),
+                }
+            )
+        
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.text();
+        })
+        .then(html => {
+            document.open();
+            document.write(html);
+            document.close();
+        })
+        .catch(error => {
+            console.error('There was a problem with the fetch operation:', error);
+        });
+    }
+
+    </script>
+</body>
+</html>

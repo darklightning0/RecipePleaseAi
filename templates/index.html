@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/cdn/themes/light.css" />
+    <script type="module" src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/cdn/shoelace-autoloader.js"></script>
+    <title>RecipePls</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f5f5f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            max-width: 500px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        form {
+            margin-bottom: 15px;
+        }
+
+        sl-textarea, sl-button {
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        sl-button {
+            margin-top: 20px;
+        }
+
+        input[type="file"] {
+            width: 100%;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <style>
+
+        .body
+        {
+
+            position: absolute;
+            width: 50%;
+            height: auto;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 10px;
+
+        }
+
+
+    </style>
+    <div class="body"> 
+        <h1>RecipePls Ai</h1>
+        <form action="{{ url_for('extract_recipe') }}" method="post">
+            <sl-textarea type="text" name="query" placeholder="Tell us about the recipe you want..." resize="auto"></sl-textarea>
+            <sl-button type="submit" variant="primary">Search</sl-button>
+        </form>
+        <form action="{{ url_for('extract_ingredients_from_image') }}" method="post" enctype="multipart/form-data">
+            <input type="file" id="avatar" name="avatar" accept="image/png, image/jpeg, image/jpg" />
+            <sl-button type="submit" variant="primary" size = "medium" circle><sl-icon name="arrow-right" label="Submit"></sl-icon></sl-button>
+        </form>
+    </div>
+</body>
+</html>
