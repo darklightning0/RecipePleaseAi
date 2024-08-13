@@ -89,6 +89,7 @@
     <div>
         <img src="{{ url_for('static', filename='Food_Images/' ~ main_recipe.Image_Name ~ '.jpg') }}" alt="{{ main_recipe.name }}">
         <h2>Type: </h2><p>{{ main_recipe.type }}</p>
+        <h2>Cuisine: </h2><p>{{ main_recipe.cuisine }}</p>
         <h2>Cooking Time: </h2><p>{{ main_recipe.cooking_time }}</p>
         <h2>Difficulty</h2>
         <sl-rating label="Difficulty" readonly value="{{ main_recipe.difficulty }}" class="difficulty" style="--symbol-color-active: #ffdd00;"></sl-rating>
