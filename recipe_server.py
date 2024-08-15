@@ -6,7 +6,6 @@ from groq import Groq
 import google.generativeai as genai
 import json
 import pandas as pd
-import base64
 
 app = Flask(__name__)
 
@@ -15,42 +14,35 @@ client.load_collection(collection_name="recipe_collection_13k_gemini", replica_n
 
 groq = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 
-gmodel = "llama3-groq-70b-8192-tool-use-preview"  # llama-3.1-70b-versatile   llama-3.1-8b-instant
+gmodel = "llama3-groq-70b-8192-tool-use-preview" 
 
 gemini = genai.configure(api_key=os.environ["GOOGLE_API_KEY"])
 
 model = genai.GenerativeModel('gemini-1.5-flash')
 
-file_path = '/Users/efekapukulak/Desktop/Hobbies/Coding/ML/RecipeAi/recipes_dataset/cluster_dataset_13k.csv'
+file_path = './recipes_dataset/cluster_dataset_13k.csv'
 df = pd.read_csv(file_path)
-
-# GET RECIPE
 
 
 def get_recipe(data):
 
     user_ingredients = data["ingredients"]
-    unwanted_ingredients = data["unwanted_ingredients"]
-
-    # DATABASE SEARCH
-
-    # query_vectors = sentence_model.encode(" ".join(user_ingredients))
 
     response = genai.embed_content(
         model="models/text-embedding-004",
         content=" ".join(user_ingredients),
-        task_type="semantic_similarity",
+        task_type="retrieval_query",
     )
     query_vectors = response["embedding"]
-    print(f"not array_contains_any(ingredients, {unwanted_ingredients})")
     results = client.search(
         collection_name="recipe_collection_13k_gemini",
         anns_field="vector",
         data=[query_vectors],
-        limit=50,
+        limit=200,
         output_fields=["ingredients", "name", "recipe", "image", "type", "cuisine",
                        "difficulty", "budget", "servings", "cooking_time", "calories",
                        "fat", "carbs", "protein", "allergens", "overall", "type"],
+        consistency_level="Strong"
     )
 
     recipes = []
@@ -77,11 +69,14 @@ def get_recipe(data):
             }
 
             recipes.append(recipe)
-        '''
+        
             ranked_recipes = []
-
+        
         for recipe in recipes:
             ranking_points = 0
+
+            if recipe["name"] == "nan" or recipe["name"] == None or recipe["name"] == "None":
+                recipes[recipe] = None
 
             if data.get("budget") is not None:
                 if data["budget"] - 1 <= recipe["budget"] <= data["budget"] + 1:
@@ -118,21 +113,21 @@ def get_recipe(data):
             if data.get("unwanted_ingredients") is not None:
                 recipe_ingredients = " ".join(recipe["ingredients"]).lower().split()
                 for ingredient in data["unwanted_ingredients"]:
-                    if ingredient.lower() in recipe_ingredients or f"{ingredient.lower()}s" in recipe_ingredients:
-                        ranking_points -= 5
+                    if ingredient.lower() in recipe_ingredients or f"{ingredient.lower()}s" in recipe_ingredients or f"{ingredient.lower()}es" in recipe_ingredients:
+                        ranking_points -= 10
 
             if data.get("allergens") is not None:
                 recipe_allergens = " ".join(recipe["allergens"]).split()
                 for allergen in data.get("allergens"):
                     if allergen in recipe_allergens:
-                        ranking_points -= 5
+                        ranking_points -= 10
 
             recipe["ranking_points"] = ranking_points
             ranked_recipes.append(recipe)
         
         ranked_recipes = sorted(ranked_recipes, key=lambda x: x["ranking_points"], reverse=True)
-        '''
-    return recipes, user_ingredients
+        
+    return ranked_recipes, user_ingredients
 
 
 # EXTRACT RECIPE
@@ -243,7 +238,7 @@ def extract_recipe():
 
 @app.route('/extract_ingredients_from_image', methods=['POST'])
 def extract_ingredients_from_image():
-
+    print(request.files)
     if 'avatar' not in request.files:
         return "No file part", 400
 
@@ -251,13 +246,13 @@ def extract_ingredients_from_image():
     if returned_file.filename == '':
         return "No selected file", 400
 
-    returned_file.save(f"/Users/efekapukulak/Desktop/Hobbies/Coding/ML/RecipeAi/templates/images/{returned_file.filename}")
+    returned_file.save(f"./images/{returned_file.filename}")
 
-    file = genai.upload_file(path=f"/Users/efekapukulak/Desktop/Hobbies/Coding/ML/RecipeAi/templates/images/{returned_file.filename}")
+    file = genai.upload_file(path=f"./images/{returned_file.filename}")
 
     response = model.generate_content([file, "What ingredients do you see in this image? Specify every ingredient. Give stable answers unlike (vegetables, various produce items, yellow fruits, greens, cabbage or lettuce). Present ingredients all in lowercase."])
     file.delete()
-    os.remove(f"/Users/efekapukulak/Desktop/Hobbies/Coding/ML/RecipeAi/templates/images/{returned_file.filename}")
+    os.remove(f"./images/{returned_file.filename}")
 
     arguments = function_calling(response.text).choices[0].message.tool_calls[0].function.arguments
     data = json.loads(arguments)
@@ -282,9 +277,12 @@ def get_relevant_recipe_titles():
 
     cluster_no = recipe.iloc[0]['Cluster_No']
 
-    cluster_recipes = df[df['Cluster_No'] == cluster_no].sample(n=5)
+    cluster_recipes = df[df['Cluster_No'] == cluster_no].sample(n=6)
 
     main_recipe = recipe.iloc[0].to_dict()
+    main_recipe["Cleaned_Ingredients"] = eval(main_recipe["Cleaned_Ingredients"])
+    main_recipe["Instructions"] = main_recipe["Instructions"].split("\n")
+    main_recipe["allergens"] = eval(main_recipe["allergens"])
     recommended_recipes = cluster_recipes.to_dict(orient='records')
 
     return render_template('recipe.html', main_recipe=main_recipe, recommended_recipes=recommended_recipes)

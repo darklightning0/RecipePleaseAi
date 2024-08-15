@@ -1,97 +1,279 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/cdn/themes/light.css" />
     <script type="module" src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/cdn/shoelace-autoloader.js"></script>
-    <title>Recipes</title>
+    <title>RecipePls AI</title>
+
     <style>
         body {
-            font-family: 'Arial', sans-serif;
-            background-color: #f5f5f5;
+            background-color: #F5F5F5;
+            color: var(--sl-color-neutral-900);
+            font-family: var(--sl-font-family-sans);
+            line-height: 1.6;
+            margin: 0;
             padding: 20px;
+            padding-top: 50px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        h1, h2 {
+            text-align: center;
+            color: var(--sl-color-primary-500);
         }
 
         h1 {
-            text-align: center;
-            color: #333;
+            font-size: 2.5em;
+            margin-bottom: 10px;
         }
 
-        .card_container {
+        h2 {
+            font-size: 1.5em;
+            margin-bottom: 20px;
+        }
+
+        h3 {
+            font-size: 1.2em;
+            color: var(--sl-color-neutral-900);
+            margin-bottom: 20px;
+        }
+
+        .card-container {
             display: grid;
-            grid-template-columns: repeat(4, 1fr); 
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
             gap: 20px;
+            padding: 20px 0;
+        }
+
+        sl-card::part(base) {
+            background-color: #ffffff;
+            border-radius: 15px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            height: 600px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        sl-card::part(base):hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        sl-card::part(image) {
+            border-top-left-radius: 15px;
+            border-top-right-radius: 15px;
+            height: 200px;
+            object-fit: cover;
+            flex-grow: 1;
+        }
+
+        sl-card::part(body) {
+            overflow-y: auto;
+            height: 400px;
+        }
+
+        .card__image {
+            max-width: 100%;
+            object-fit: cover;
+        }
+
+        sl-card h3 {
+            margin-top: 0;
+            color: var(--sl-color-primary-500);
+        }
+
+        sl-card ul {
+            padding-left: 20px;
+            margin-bottom: 10px;
+        }
+
+        .card-overview [slot='footer'] {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: auto;
+        }
+
+        sl-button::part(base) {
+            background-color: var(--sl-color-primary-500);
+        }
+
+        sl-button::part(base):hover {
+            background-color: var(--sl-color-success-500);
+        }
+
+        sl-rating {
+            --symbol-color-active: #f1c40f;
+        }
+
+        .card-overview small {
+            color: var(--sl-color-neutral-500);
+        }
+
+        .ingredients-container {
+            background-color: #ffffff;
+            border-radius: 15px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
             padding: 20px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
         }
 
-        sl-card {
-            --border-radius: 10px;
-            --box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            width: 100%; 
+        .ingredients-container h2 {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 10px;
         }
 
-        sl-card img {
-            border-top-left-radius: 10px;
-            border-top-right-radius: 10px;
-            width: 100%; 
+        .ingredients-container ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+            font-size: 1.2em;
+        }
+
+        .ingredients-container li {
+            padding: 5px 0;
+        }
+
+        .ingredients-container li::before {
+            content: "•";
+            color: var(--sl-color-primary-500);
+            font-weight: bold;
+            display: inline-block;
+            width: 1em;
+            margin-left: -1em;
         }
 
         sl-button {
+            font-size: 1.2em;
+            padding: 10px 20px;
             margin-top: 10px;
+        }
+        .homepage {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+
+        .homepage button {
+            background: none;
+            border: none;
+            padding: 0;
+            cursor: pointer;
+        }
+
+        .homepage img {
+            width: 250px;
+            height: auto;
+            transition: all 0.2s ease;
+        }
+
+        .homepage.shrink img {
+            content: url('/static/sources/logo_icon.png');
+            width: 100px; 
+            height: auto;
         }
     </style>
 </head>
-<body>
-    <h1>Recipes</h1>
-    <h2>Your Ingredients: {{user_ingredients}}</h2>
-    <div class="card_container">
-        {% for recipe in recipes %}
 
-        <sl-card class="cards">
-            <img
-                slot="image"
-                src="{{ url_for('static', filename='Food_Images/' ~ recipe.image ~ '.jpg') }}"
-                alt="{{ recipe.name }}"
-            />
-            <h3>{{ recipe.name }}</h3>
-            <strong>Type: </strong><br/><ul>{{recipe.type}}</ul>
-            <strong>Ingredients</strong><br/>
-            <ul>{% for ing in recipe.ingredients %}<li>{{ ing }}</li>{% endfor %}</ul>
-            <div slot="footer">
-                <sl-button variant="primary" pill onclick="loadRecipeDetails('{{ recipe.name }}')">More Info</sl-button>
-                <sl-rating label="Overall" readonly value="{{recipe.overall}}"></sl-rating>
-            </div>
-        </sl-card>
-        {% endfor %}
+<body>
+    <div class="homepage">
+        <button type="button" onclick="window.location.href='/'">
+            <img src="/static/sources/logo.png" alt="Home Logo">
+        </button>
+    </div>
+    <div class="container">
+        <h1>RecipePls AI</h1>
+        <div class="ingredients-container">
+            <h2>Your Ingredients:</h2>
+            <ul>
+                {% for user_ingredient in user_ingredients %}
+                <li>{{ user_ingredient }}</li>
+                {% endfor %}
+            </ul>
+            <sl-button href="/" size="medium" variant="primary">Go Back</sl-button>
+        </div>
+        <div class="card-container">
+            {% for recipe in recipes %}
+            <sl-card class="card-overview">
+                <img slot="image" src="{{ url_for('static', filename='Food_Images/' ~ recipe.image ~ '.jpg') }}" alt="{{ recipe.name }}" />
+                <h3>{{ recipe.name }}</h3>
+                <small>
+                    <p><strong>Type:</strong> {{ recipe.type }}</p>
+                </small>
+                <strong>Ingredients:</strong>
+                <ul>
+                    {% for ing in recipe.ingredients %}
+                    <li>{{ ing }}</li>
+                    {% endfor %}
+                </ul>
+                <div slot="footer">
+                    <sl-rating label="Overall" readonly value="{{ recipe.overall }}"></sl-rating>
+                    <sl-button variant="primary" size="small" onclick="loadRecipeDetails('{{ recipe.name }}')">View Recipe</sl-button>
+                </div>
+            </sl-card>
+            {% endfor %}
+        </div>
     </div>
     <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const homepage = document.querySelector('.homepage');
+            const logo = homepage.querySelector('img');
+            
+            let lastScrollTop = 0;
+            window.addEventListener('scroll', () => {
+                const scrollTop = window.scrollY || document.documentElement.scrollTop;
+                const threshold = 100;
 
-        function loadRecipeDetails(title){
-                fetch('/get_relevant_recipe_titles', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ title: title }),
+                if (scrollTop > lastScrollTop) {
+                    homepage.classList.add('shrink');
+                } else {
+                    if (scrollTop < threshold) {
+                        homepage.classList.remove('shrink');
+                    }
                 }
-            )
-        
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.text();
-        })
-        .then(html => {
-            document.open();
-            document.write(html);
-            document.close();
-        })
-        .catch(error => {
-            console.error('There was a problem with the fetch operation:', error);
+                lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;
+            });
         });
-    }
-
+        function loadRecipeDetails(title) {
+            fetch('/get_relevant_recipe_titles', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ title: title }),
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.text();
+            })
+            .then(html => {
+                document.open();
+                document.write(html);
+                document.close();
+            })
+            .catch(error => {
+                console.error('There was a problem with the fetch operation:', error);
+            });
+        }
     </script>
 </body>
+
 </html>
