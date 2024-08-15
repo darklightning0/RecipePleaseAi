@@ -171,7 +171,7 @@ def function_calling(string):
                         },
                         "difficulty": {
                             "type": "integer",
-                            "description": "Scale the difficulty user wants between 1-5, min: 1 max: 5"
+                            "description": "Scale the difficulty user wants between 1-5, min: 1 max: 5."
                         },
                         "budget": {
                             "type": "integer",
