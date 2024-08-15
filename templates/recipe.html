@@ -5,8 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/cdn/themes/light.css" />
-    <script type="module"
-        src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/cdn/shoelace-autoloader.js"></script>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/cdn/shoelace.js" ></script>
+    
     <title>RecipePls {{ main_recipe.Title }}</title>
     <style>
         :root {
@@ -73,8 +73,13 @@
             gap: 40px;
         }
 
-        .ingredients, .instructions {
-            width: 100%;
+        .seperator {
+            height: 20px;
+        }
+
+        .ingredients,
+        .instructions {
+            /* width: 100%; */
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -83,12 +88,10 @@
         .ingredients {
             background: #f9f9f9;
             padding: 20px;
-            padding-top: 40px;
         }
 
         .ingredients h2 {
             font-size: 1.8em;
-            margin-bottom: 10px;
             position: relative;
         }
 
@@ -118,6 +121,7 @@
         .ingredients ul li::before {
             content: '✔';
             margin-right: 10px;
+            margin-left: 10px;
             color: var(--primary-color);
         }
 
@@ -255,12 +259,6 @@
             grid-row: 3;
         }
 
-        .skeleton-paragraphs {
-            display: none; 
-            flex-direction: column;
-            gap: 1rem;
-        }
-
         .skeleton-paragraphs sl-skeleton {
             margin-bottom: 1rem;
         }
@@ -344,8 +342,6 @@
             width: 100px;
             height: auto;
         }
-
-
     </style>
 </head>
 
@@ -356,6 +352,7 @@
         </button>
     </div>
     <div class="container">
+
         <h1>{{ main_recipe.Title }}</h1>
 
         <div class="grid-container">
@@ -380,14 +377,14 @@
 
             <div class="grid-item text6">
                 <h3>Difficulty</h3>
-                <sl-rating label="Difficulty" readonly value="{{ main_recipe.difficulty }}"></sl-rating>
+                <sl-rating label="Difficulty" class="difficulty" readonly value="{{ main_recipe.difficulty }}"></sl-rating>
             </div>
             <div class="grid-item text7">
                 <h3>Budget</h3>
-                <sl-rating label="Budget" readonly value="{{ main_recipe.budget }}"></sl-rating>
+                <sl-rating label="Budget" class="budget" readonly value="{{ main_recipe.budget }}"></sl-rating>
             </div>
         </div>
-
+        <div class="seperator"></div>
         <div class="ingredients">
             <h2>Ingredients</h2>
             <ul>
@@ -396,7 +393,7 @@
                 {% endfor %}
             </ul>
         </div>
-
+        <div class="seperator"></div>
         <div class="instructions">
             <h2>Instructions</h2>
             <ol>
@@ -441,21 +438,19 @@
             </div>
             {% endif %}
         </div>
-
         <div class="chat-box">
             <h2>Ask AI!</h2>
             <form id="chat-form">
-                <input type="text" size="large" name="query" placeholder="Type your message here..." style="max-width: 100%; min-width: 500px;">
+                <input type="text" size="large" name="query" placeholder="Type your message here..."
+                    style="max-width: 100%; min-width: 500px;">
                 <sl-button type="submit" variant="primary">Send</sl-button>
                 <input type="hidden" name="title" value="{{ main_recipe.Title }}">
             </form>
+            <div style="align-items: center; display: flex; justify-content: center;">
+                <sl-spinner class="ai-chat-spinner" style="font-size: 3rem; display: none;"></sl-spinner>
+            </div>
             <div id="chat-response">
-                <div class="skeleton-paragraphs">
-                    <sl-skeleton effect="pulse" style="height: 1rem;"></sl-skeleton>
-                    <sl-skeleton effect="pulse" style="height: 1rem;"></sl-skeleton>
-                    <sl-skeleton effect="pulse" style="height: 1rem;"></sl-skeleton>
-                    <sl-skeleton effect="pulse" style="height: 1rem;"></sl-skeleton>
-                </div>    
+
             </div>
         </div>
 
@@ -479,17 +474,16 @@
     <script>
 
         document.addEventListener('DOMContentLoaded', () => {
-                const homepage = document.querySelector('.homepage');
-                const logo = homepage.querySelector('img');
-
-                homepage.classList.add('shrink');
-            });
+            const homepage = document.querySelector('.homepage');
+            const logo = homepage.querySelector('img');
+            homepage.classList.add('shrink');
+        });
 
         document.getElementById('chat-form').addEventListener('submit', function (event) {
             event.stopImmediatePropagation();
             event.preventDefault();
-            const skeleton = document.querySelector('.skeleton-paragraphs');
-            skeleton.style.display = 'flex'; 
+            const spinner = document.querySelector('.ai-chat-spinner');
+            spinner.style.display = 'block';
             var query = event.target.query.value;
             var title = event.target.title.value;
 
@@ -500,16 +494,16 @@
                 },
                 body: JSON.stringify({ query: query, title: title }),
             })
-            .then(response => response.text())
-            .then(text => {
-                const chatResponse = document.getElementById('chat-response');
-                chatResponse.innerHTML = `<p>${text}</p>`;
-                skeleton.style.display = 'none'; 
-            })
-            .catch(error => {
-                console.error('There was a problem with the fetch operation:', error);
-                skeleton.style.display = 'none'; 
-            });
+                .then(response => response.text())
+                .then(text => {
+                    const chatResponse = document.getElementById('chat-response');
+                    spinner.style.display = 'none';
+                    chatResponse.innerHTML = `<p>${text}</p>`;
+                })
+                .catch(error => {
+                    console.error('There was a problem with the fetch operation:', error);
+                    spinner.style.display = 'none';
+                });
         });
 
         function loadRecipeDetails(title) {

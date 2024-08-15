@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/cdn/themes/light.css" />
     <script type="module" src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/cdn/shoelace-autoloader.js"></script>
-    <title>RecipePls AI</title>
+    <title>RecipePls</title>
 
     <style>
         body {
@@ -198,15 +198,13 @@
         </button>
     </div>
     <div class="container">
-        <h1>RecipePls AI</h1>
         <div class="ingredients-container">
             <h2>Your Ingredients:</h2>
             <ul>
                 {% for user_ingredient in user_ingredients %}
-                <li>{{ user_ingredient }}</li>
+                <li style="display: inline; padding-left: 15px;">{{ user_ingredient }}</li>
                 {% endfor %}
             </ul>
-            <sl-button href="/" size="medium" variant="primary">Go Back</sl-button>
         </div>
         <div class="card-container">
             {% for recipe in recipes %}
@@ -216,8 +214,7 @@
                 <small>
                     <p><strong>Type:</strong> {{ recipe.type }}</p>
                 </small>
-                <strong>Ingredients:</strong>
-                <ul>
+                <ul style="text-align: left;">
                     {% for ing in recipe.ingredients %}
                     <li>{{ ing }}</li>
                     {% endfor %}
