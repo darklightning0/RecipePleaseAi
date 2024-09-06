@@ -2,6 +2,8 @@
 
 RecipePls is an advanced, AI-powered recipe recommendation system that leverages Retrieval-Augmented Generation (RAG) methods to provide personalized cooking suggestions. The system uses text and image-based inputs to retrieve relevant recipes from a vast dataset and presents them in a user-friendly way. Powered by Large Language Models (LLMs), RecipePls delivers smart recommendations that align with user-specific preferences, including dietary restrictions, allergens, nutritional goals, and ingredient availability.
 
+![rimg1](images/rimg1)
+
 ## Features
 
 - **Personalized Recommendations**: Recipes are recommended based on user input parameters like available ingredients, unwanted ingredients, budget, difficulty, and nutritional preferences.
@@ -16,6 +18,14 @@ RecipePls is an advanced, AI-powered recipe recommendation system that leverages
 - **Milvus**: Used for managing large-scale vector databases and performing efficient nearest neighbor searches on recipe embeddings.
 - **Groq API**: Facilitates function-calling tools for clear input and handles AI-based question-answering and embedding customization.
 - **Google Generative AI (Gemini)**: Used for generating text embeddings and handling image inputs.
+
+## LLM Selection Process
+
+Initially, this project used Milvus for recipe retrieval, while an LLM was responsible for formatting the recipes. I started with Google’s Gemini API for this task, but encountered persistent issues during Retrieval-Augmented Generation (RAG) operations. After some research, I found out that Gemini has problem with RAG operations, so I decided to switch to OpenAI’s API. Although OpenAI was fast, its costs were prohibitive for a small-scale project like this.
+
+I then discovered the Groq API, which provided excellent performance at no cost, making it a perfect fit. To optimize further, I ran the entire dataset through Groq once, extracting key recipe features (calories, servings, etc.) and saved them to a CSV file. This approach eliminated the need to call the LLM repeatedly for these details during user searches, significantly reducing latency.
+
+In the final setup, OpenAI handles image input, Gemini is used for embeddings, and Groq powers function calling and the "Ask AI!" feature. This combination ensures speed, efficiency, and cost-effectiveness for the project.
 
 ## Dataset
 
@@ -34,6 +44,16 @@ RecipePls uses a customized dataset that consists of 13,000 recipes, including d
 - **Image**: A visual representation of the recipe.
 
 The original dataset can be found here: [Kaggle Food Ingredients and Recipe Dataset](https://www.kaggle.com/datasets/pes12017000148/food-ingredients-and-recipe-dataset-with-images?resource=download).
+
+## Images
+
+![rimg2](images/rimg2)
+![rimg3](images/rimg3)
+![rimg4](images/rimg4)
+![rimg5](images/rimg5)
+![rimg6](images/rimg6)
+![rimg7](images/rimg7)
+
 
 ## Setup and Usage
 
