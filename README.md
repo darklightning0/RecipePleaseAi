@@ -2,7 +2,7 @@
 
 RecipePls is an advanced, AI-powered recipe recommendation system that leverages Retrieval-Augmented Generation (RAG) methods to provide personalized cooking suggestions. The system uses text and image-based inputs to retrieve relevant recipes from a vast dataset and presents them in a user-friendly way. Powered by Large Language Models (LLMs), RecipePls delivers smart recommendations that align with user-specific preferences, including dietary restrictions, allergens, nutritional goals, and ingredient availability.
 
-![rimg1](images/rimg1)
+![rimg1](images/rimg1.png)
 
 ## Features
 
@@ -47,12 +47,12 @@ The original dataset can be found here: [Kaggle Food Ingredients and Recipe Data
 
 ## Images
 
-![rimg2](images/rimg2)
-![rimg3](images/rimg3)
-![rimg4](images/rimg4)
-![rimg5](images/rimg5)
-![rimg6](images/rimg6)
-![rimg7](images/rimg7)
+![rimg2](images/rimg2.png)
+![rimg3](images/rimg3.png)
+![rimg4](images/rimg4.png)
+![rimg5](images/rimg5.png)
+![rimg6](images/rimg6.png)
+![rimg7](images/rimg7.png)
 
 
 ## Setup and Usage
