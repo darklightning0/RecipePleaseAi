@@ -45,6 +45,10 @@ RecipePls uses a customized dataset that consists of 13,000 recipes, including d
 
 The original dataset can be found here: [Kaggle Food Ingredients and Recipe Dataset](https://www.kaggle.com/datasets/pes12017000148/food-ingredients-and-recipe-dataset-with-images?resource=download).
 
+## Acknowledgments
+
+This project was completed during my internship at [ARDICTECH](https://www.ardictech.com/), and I would like to express my deep gratitude for their support and guidance throughout the process. I would also like to thank [Mirza Atlı](https://mirza.town/) for his unwavering mentorship and continuous encouragement during my internship. His expertise and guidance have been invaluable to the success of this project.
+
 ## Images
 
 ![rimg2](images/rimg2.png)
